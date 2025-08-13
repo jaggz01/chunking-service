@@ -42,8 +42,8 @@ def semantic_chunk(text, similarity_threshold=0.75, max_chunk_size=5):
     for i in range(1, len(sentences)):
 
         similarity = cosine_similarity(
-            [np.mean(current_vecs, axis=0)],
-            [embeddings[i]]
+            [np.mean([vec.cpu().numpy() for vec in current_vecs], axis=0)],
+            [embeddings[i].cpu().numpy()]
         )[0][0]
 
         if similarity > similarity_threshold and len(current_chunk) < max_chunk_size:
@@ -59,9 +59,10 @@ def semantic_chunk(text, similarity_threshold=0.75, max_chunk_size=5):
             chunk_embeddings = model.encode(chunk_text,
                                             device=DEVICE,       #RUN on GPU
                                             convert_to_tensor=True)  # Keep outputs as torch Tensors on GPU
-            embeds.append(chunk_embeddings.tolist())
+            embeds.append(chunk_embeddings.cpu().numpy().tolist())
 
-            #reset or poll over
+
+        #reset or poll over
             current_chunk = [sentences[i]]
             current_vecs = [embeddings[i]]
 
@@ -70,8 +71,9 @@ def semantic_chunk(text, similarity_threshold=0.75, max_chunk_size=5):
         chunk_text = " ".join(current_chunk)
         chunk_embeddings = model.encode(chunk_text,
                             device=DEVICE,       #RUN on GPU
-                            convert_to_tensor=puipTrue)  # Keep outputs as torch Tensors on GPU
-        embeds.append(chunk_embeddings.tolist())
+                            convert_to_tensor=True)  # Keep outputs as torch Tensors on GPU
+        embeds.append(chunk_embeddings.cpu().numpy().tolist())
+
         chunks.append(chunk_text)
 
     return chunks, embeds
